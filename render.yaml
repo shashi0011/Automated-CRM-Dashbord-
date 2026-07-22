@@ -1,0 +1,37 @@
+services:
+  # FastAPI backend
+  - type: web
+    name: hcp-crm-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: DATABASE_URL
+        value: sqlite:///./hcp_crm.db
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: GROQ_MODEL_FALLBACK
+        value: llama-3.3-70b-versatile
+
+  # React (Vite) frontend, built and served as a static site
+  - type: web
+    name: hcp-crm-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: dist
+    envVars:
+      # After the backend deploys, copy its URL here, e.g.
+      # https://hcp-crm-backend.onrender.com  (no trailing slash)
+      - key: VITE_API_BASE_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
